@@ -1,0 +1,62 @@
+from datetime import datetime
+from meteostat import Hourly/Daily/Monthly, Stations, units, Point
+import numpy as np
+import pandas as pd
+from skforecast.ForecasterAutoregMultiVariate import ForecasterAutoregMultiVariate
+from sklearn.ensemble import RandomForestRegressor
+
+import warnings
+warnings.filterwarnings('ignore')
+
+#time period for desired weather data
+start = datetime(yyyy, mm, dd)
+end = datetime(yyyy, mm, dd)
+
+#call point of weather data
+point = Point(lat, long, optional elevation)
+
+#get hourly data, normalize data, interpolate data over # hours if NaN values, convert to imperial units
+data = Hourly/Daily/Monthly(point, start, end)
+data = data.normalize()
+data = data.interpolate(limit = # of hours)
+data = data.convert(units.imperial)
+
+#fetch data
+data = data.fetch()
+
+#print data to ensure data fetched properly
+print(data)
+
+#drop undesired columns from fetched data
+data = data.drop(columns = 'xxx')
+
+#convert wind speed to knots
+data['wind'] = (data['wspd']*0.868976)
+
+#drop old wind speed column
+data = data.drop(columns = 'wspd')
+
+#choose target variable from available columns
+target_variable = 'temp'
+
+#define target and exogenous variables
+y = data[target_variable]
+exog = data.drop(target_variable, axis=1)
+
+#convert target variable to dataframe
+y = y.to_frame()
+
+#number of hours/days/months to forecast for
+steps = number of hours/days/months
+
+#set up Random Forest, can customize estimators and depth
+regressor = RandomForestRegressor(n_estimators=250, max_depth=8, random_state=123)
+
+#define forecaster, lags for how far back predictor goes to make prediction
+forecaster = ForecasterAutoregMultiVariate(regressor = regressor, lags = 168, steps = steps, level = 'temp')
+
+#fit forecaster
+forecaster.fit(y, exog=exog)
+
+#create forecast, intervals must add to 100
+predictions_temp = forecaster.predict_interval(steps=steps, exog=exog, interval=[25, 75])

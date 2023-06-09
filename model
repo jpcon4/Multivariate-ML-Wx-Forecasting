@@ -59,4 +59,4 @@ forecaster = ForecasterAutoregMultiVariate(regressor = regressor, lags = 168, st
 forecaster.fit(y, exog=exog)
 
 #create forecast, intervals must add to 100
-predictions_temp = forecaster.predict_interval(steps=steps, exog=exog, interval=[25, 75])
+predictions_temp = forecaster.predict(steps=steps, exog=exog)
